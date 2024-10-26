@@ -8,8 +8,8 @@ COPY --chown=node:node package.json pnpm-lock.yaml .
 RUN pnpm i --frozen-lockfile
 
 COPY --chown=node:node . .
-USER node
 
-RUn pnpm run build
+RUN pnpm run build
+USER node
 
 CMD ["pnpm", "run", "start:prod"]
