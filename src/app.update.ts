@@ -1,6 +1,6 @@
 import { Ctx, Message, On, Start, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
-import { HELLO_STICKER_ID } from './constants';
+import { HELLO_STICKER_ID, MESSAGES } from './constants';
 import { GPTService } from './gpt/gpt.service';
 import { IMsg } from './interfaces';
 
@@ -12,8 +12,15 @@ export class AppUpdate {
       await ctx.replyWithSticker(HELLO_STICKER_ID);
    }
    @On('text')
-   async onTextMessage(@Ctx() ctx: Context, @Message() message: IMsg) {
-      const response = await this.gptService.complete([{ content: message.text, role: 'user' }]);
-      await ctx.reply(response.choices[0].message.content);
+   async onTextMessage(@Ctx() ctx: Context, @Message() msg: IMsg) {
+      const answer = await this.gptService.checkForMistakes(msg.text);
+      if (msg.chat.type === 'supergroup' && !msg.is_automatic_forward) {
+         return;
+      }
+      if (!answer) {
+         await ctx.reply(MESSAGES.CANNOT_REPLY);
+         return;
+      }
+      await ctx.reply(answer, { reply_parameters: { message_id: ctx.message.message_id } });
    }
 }
